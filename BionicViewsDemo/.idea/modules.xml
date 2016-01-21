@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/BionicViewsDemo.iml" filepath="$PROJECT_DIR$/BionicViewsDemo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/deleteme/app/app.iml" filepath="$PROJECT_DIR$/deleteme/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../bionicviews.iml" filepath="$PROJECT_DIR$/../bionicviews.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../bionicviews/bionicviews.iml" filepath="$PROJECT_DIR$/../bionicviews/bionicviews.iml" />
+    </modules>
+  </component>
+</project>

@@ -1,0 +1,4 @@
+include ':app'
+
+include ':bionicviews'
+project(':bionicviews').projectDir = new File(settingsDir, '../')
