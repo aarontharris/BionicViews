@@ -116,6 +116,14 @@ public class Bionic {
 		private void onEvent( Meta metaSend, MetaEvent event ) { // FIXME need param model
 			if ( MetaKeyChangedEvent.class.equals( event.getType() ) ) {
 				MetaKeyChangedEvent kEvent = (MetaKeyChangedEvent) event;
+
+				// Don't deliver key events to metas that overwrite the key
+				// also do not propagate beyond this meta since the children should
+				// not care about key changes above this meta (since it controls this key)
+				if ( containsKey( kEvent.getKey() ) ) {
+					return;
+				}
+
 				if ( subscribedKeyChangedEvents != null ) {
 					OnMetaEvent onMetaEvent = subscribedKeyChangedEvents.get( kEvent.getKey() );
 					if ( onMetaEvent != null ) {

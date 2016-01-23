@@ -33,6 +33,7 @@ public class SlaveView extends LinearLayout {
 	private void init() throws RuntimeException {
 		try {
 			LayoutInflater.from( getContext() ).inflate( R.layout.merge_slaveview, this, true );
+			setOrientation( VERTICAL );
 			message = (TextView) findViewById( R.id.slaveview_message_textview );
 
 			if ( !isInEditMode() ) {

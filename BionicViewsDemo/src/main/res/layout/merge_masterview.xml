@@ -1,13 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
-       android:layout_width="wrap_content"
-       android:layout_height="wrap_content"
-       android:orientation="vertical">
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="#FAA"
+    android:orientation="vertical"
+    android:padding="15dp"
+    tools:context=".MainActivity"
+    >
+
+    <Button
+        android:id="@+id/masterview_input_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="0dp"
+        android:padding="0dp"
+        android:text="Click Master"
+        />
 
     <com.aarontharris.bionicviewsdemo.AgnosticView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="#AFA"
         android:orientation="vertical"
+        android:padding="15dp"
+        />
+
+    <com.aarontharris.bionicviewsdemo.InputView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#AAF"
+        android:orientation="vertical"
+        android:padding="15dp"
         />
 
 </merge>
