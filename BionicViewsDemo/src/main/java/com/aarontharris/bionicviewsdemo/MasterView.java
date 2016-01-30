@@ -39,21 +39,25 @@ public class MasterView extends LinearLayout {
 			setOrientation( VERTICAL );
 
 			if ( !isInEditMode() ) {
-				mInput = (Button)findViewById( R.id.masterview_input_button );
+				mInput = (Button) findViewById( R.id.masterview_input_button );
 				mInput.setOnClickListener( new OnClickListener() {
 					@Override
 					public void onClick( View v ) {
-						BLog.d( "Master: click" );
-						Meta meta = Bionic.getInstance().attainMeta( MasterView.this );
-						counter++;
-						meta.putString( testkey1, "master.click " + counter );
+						try {
+							BLog.d( "Master: click" );
+							Meta meta = Bionic.getInstance().attainMeta( MasterView.this );
+							counter++;
+							meta.putString( testkey1, "master.click " + counter );
+						} catch ( Exception e ) {
+							BLog.e( e );
+						}
 					}
 				} );
 
 				// Programmatic works too
 				{
 					SlaveView slaveView = new SlaveView( getContext() );
-					((TextView)slaveView.findViewById( R.id.slaveview_message_textview )).setText("I am a slave2");
+					( (TextView) slaveView.findViewById( R.id.slaveview_message_textview ) ).setText( "I am a slave2" );
 					slaveView.setOrientation( VERTICAL );
 					this.addView( slaveView );
 				}

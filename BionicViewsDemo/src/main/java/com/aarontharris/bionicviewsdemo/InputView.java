@@ -39,10 +39,14 @@ public class InputView extends LinearLayout {
 				mInput.setOnClickListener( new OnClickListener() {
 					@Override
 					public void onClick( View v ) {
-						BLog.d( "Input: click" );
-						Meta meta = Bionic.getInstance().attainMeta( InputView.this );
-						counter++;
-						meta.putString( MasterView.testkey1, "input.click " + counter ); // deliberately overwrite, hacky but serves our test
+						try {
+							BLog.d( "Input: click" );
+							Meta meta = Bionic.getInstance().attainMeta( InputView.this );
+							counter++;
+							meta.putString( MasterView.testkey1, "input.click " + counter ); // deliberately overwrite, hacky but serves our test
+						} catch ( Exception e ) {
+							BLog.e( e );
+						}
 					}
 				} );
 			}
