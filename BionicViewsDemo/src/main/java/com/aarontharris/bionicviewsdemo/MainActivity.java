@@ -10,11 +10,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.aarontharris.bionicviews.BLog;
-import com.aarontharris.bionicviews.Bionic;
-import com.aarontharris.bionicviews.Bionic.Meta;
-import com.aarontharris.bionicviews.BionicConfig;
-
 public class MainActivity extends AppCompatActivity {
 
 	@Override
@@ -32,14 +27,6 @@ public class MainActivity extends AppCompatActivity {
 				Snackbar.make( view, "Replace with your own action", Snackbar.LENGTH_LONG ).setAction( "Action", null ).show();
 			}
 		} );
-
-		BionicConfig.setDebug( true );
-		try {
-			Meta meta = Bionic.getInstance().attainMeta( rootView );
-			meta.putString( "testkey1", "testval1" );
-		} catch ( Exception e ) {
-			BLog.e( e );
-		}
 	}
 
 	@Override

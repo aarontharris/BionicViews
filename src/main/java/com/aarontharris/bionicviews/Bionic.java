@@ -11,40 +11,19 @@ import java.util.WeakHashMap;
 
 public class Bionic {
 	private static final Bionic self = new Bionic();
-	private static final String UNDEF = "__BIONIC::UNDEF__";
 
-	public static Bionic getInstance() {
+	public static Bionic get() {
 		return self;
 	}
 
 	public static abstract class BionicKey<T> {
-		private String key;
-
-		public BionicKey( String key ) {
-			this.key = key;
-		}
-
-		public String getKeyString() {
-			return key;
-		}
-
 		public abstract T get( Meta meta );
-		public abstract void put( Meta meta, T value );
 	}
 
 	public static class StringKey extends BionicKey<String> {
-		public StringKey( String key ) {
-			super( key );
-		}
-
 		@Override
 		public String get( Meta meta ) {
-			return meta.getString( getKeyString(), null );
-		}
-
-		@Override
-		public void put( Meta meta, String value ) {
-			meta.putString( getKeyString(), value );
+			return (String) meta.getObject( this, null );
 		}
 	}
 
@@ -56,23 +35,13 @@ public class Bionic {
 	 * @param <T>
 	 */
 	public static class SimpleKey<T> extends BionicKey<T> {
-
-		public SimpleKey( String key ) {
-			super( key );
-		}
-
 		@Override
 		public T get( Meta meta ) {
-			return (T) meta.getObject( getKeyString(), null );
-		}
-
-		@Override
-		public void put( Meta meta, T value ) {
-			meta.putObject( getKeyString(), value );
+			return (T) meta.getObject( this, null );
 		}
 	}
 
-	public static interface OnMetaEvent {
+	public static interface OnKeyChange<KEY extends BionicKey<?>> {
 		/**
 		 * Handle an event propogated to this Meta.
 		 *
@@ -81,9 +50,8 @@ public class Bionic {
 		 * @param event
 		 * @return propagate? false if the event was consumed and should not be propagated.
 		 */
-		public boolean handleEvent( Meta metaSend, Meta metaRecv, MetaEvent event );
+		public boolean handleEvent( Meta metaSend, Meta metaRecv, KeyChange<KEY> event );
 	}
-
 
 	public static abstract class MetaEvent {
 		private Class<? extends MetaEvent> type;
@@ -98,15 +66,15 @@ public class Bionic {
 	}
 
 
-	public static class MetaKeyChangedEvent extends MetaEvent {
-		private String key;
+	public static class KeyChange<KEY extends BionicKey<?>> extends MetaEvent {
+		private KEY key;
 
-		public MetaKeyChangedEvent( String key ) {
-			super( MetaKeyChangedEvent.class );
+		public KeyChange( KEY key ) {
+			super( KeyChange.class );
 			this.key = key;
 		}
 
-		public String getKey() {
+		public KEY getKey() {
 			return key;
 		}
 	}
@@ -115,13 +83,13 @@ public class Bionic {
 	// Meta is an inner class because it is managed by Bionic
 	// Each Meta should only be alive as long as its manager, so its okay to nest.
 	public class Meta {
-		private Map<String, Object> data;
-		private Map<String, OnMetaEvent> subscribedKeyChangedEvents = null;
+		private Map<BionicKey<?>, Object> data; // WeakHashMap?
+		private Map<BionicKey<?>, OnKeyChange> subscribedKeyChangedEvents = null; // WeakHashMap?
 
 		public Meta() {
 		}
 
-		public boolean containsKey( String key ) {
+		public boolean containsKey( BionicKey<?> key ) {
 			return data != null && data.containsKey( key );
 		}
 
@@ -132,9 +100,10 @@ public class Bionic {
 		 * @param key
 		 * @param defaultValue
 		 */
-		public Object getObject( String key, Object defaultValue ) {
+		public Object getObject( BionicKey<?> key, Object defaultValue ) {
 			try {
-				return Bionic.this.getObject( getView( this ), key, defaultValue );
+				Meta meta = Bionic.this.lookup( getView( this ), key );
+				return meta.data.get( key );
 			} catch ( Exception e ) {
 				BLog.e( e );
 			}
@@ -143,34 +112,18 @@ public class Bionic {
 
 
 		/**
-		 * Associates the given key->value to this Meta.  Descendants of this View will get this Meta's copy of the value if this key exists
-		 * higher up the tree.
-		 *
-		 * @param key
-		 * @param value
-		 */
-		public void putObject( String key, Object value ) {
-			if ( data == null ) {
-				data = new HashMap<>();
-			}
-			data.put( key, value );
-			try {
-				notifyChildren( this, new MetaKeyChangedEvent( key ) );
-			} catch ( Exception e ) {
-				BLog.e( e );
-			}
-		}
-
-		/**
-		 * Find the nearest ancestor to the meta's view containing the given key and return its value<br>
+		 * Get a typed value based on the given type aware key.<br>
+		 * Find the nearest ancestor to the given view containing the given key and return its value<br>
 		 * If key is not obtainable, defaultValue is returned<br>
 		 *
 		 * @param key
 		 * @param defaultValue
+		 * @param <T>
+		 * @return
 		 */
-		public String getString( String key, String defaultValue ) {
+		public <T> T getValue( BionicKey<T> key, T defaultValue ) {
 			try {
-				return Bionic.this.getString( getView( this ), key, defaultValue );
+				return Bionic.this.getValue( getView( this ), key, defaultValue );
 			} catch ( Exception e ) {
 				BLog.e( e );
 			}
@@ -178,35 +131,36 @@ public class Bionic {
 		}
 
 		/**
-		 * Associates the given key->value to this Meta.  Descendants of this View will get this Meta's copy of the value if this key exists
-		 * higher up the tree.
+		 * Put a typed value based on the given type aware key<br>
+		 * Attains a Meta for the given View and associates the value.
 		 *
 		 * @param key
 		 * @param value
+		 * @param <T>
+		 * @throws Exception
 		 */
-		public void putString( String key, String value ) {
+		public <T> void putValue( BionicKey<T> key, T value ) throws Exception {
 			if ( data == null ) {
 				data = new HashMap<>();
 			}
 			data.put( key, value );
 			try {
-				notifyChildren( this, new MetaKeyChangedEvent( key ) );
+				notifyChildren( this, new KeyChange( key ) );
 			} catch ( Exception e ) {
 				BLog.e( e );
 			}
 		}
 
-		public void subscribeKeyChange( String key, boolean asap, OnMetaEvent eventHandler ) {
+		public <T extends BionicKey<?>> void subscribeKeyChange( T key, boolean asap, OnKeyChange<T> eventHandler ) {
 			if ( subscribedKeyChangedEvents == null ) {
 				subscribedKeyChangedEvents = new HashMap<>();
 			}
 			subscribedKeyChangedEvents.put( key, eventHandler );
 			try {
 				if ( asap ) {
-					String value = getString( key, UNDEF );
-					if ( value != UNDEF ) {
-						Meta meta = Bionic.this.lookup( getView( this ), key );
-						MetaKeyChangedEvent event = new MetaKeyChangedEvent( key );
+					Meta meta = lookup( getView( this ), key );
+					if ( meta != null ) {
+						KeyChange event = new KeyChange( key );
 						if ( eventHandler.handleEvent( meta, this, event ) ) {
 							notifyChildren( meta, event );
 						}
@@ -218,8 +172,8 @@ public class Bionic {
 		}
 
 		private void onEvent( Meta metaSend, MetaEvent event ) throws Exception {
-			if ( MetaKeyChangedEvent.class.equals( event.getType() ) ) {
-				MetaKeyChangedEvent kEvent = (MetaKeyChangedEvent) event;
+			if ( KeyChange.class.equals( event.getType() ) ) {
+				KeyChange kEvent = (KeyChange) event;
 
 				// Don't deliver key events to metas that overwrite the key
 				// also do not propagate beyond this meta since the children should
@@ -228,15 +182,19 @@ public class Bionic {
 					return;
 				}
 
-				if ( subscribedKeyChangedEvents != null ) {
-					OnMetaEvent onMetaEvent = subscribedKeyChangedEvents.get( kEvent.getKey() );
-					if ( onMetaEvent != null ) {
-						if ( onMetaEvent.handleEvent( metaSend, this, event ) ) {
-							notifyChildren( metaSend, event );
-							return;
+				// Key Change Events
+				if ( event instanceof KeyChange ) {
+					if ( subscribedKeyChangedEvents != null ) {
+						OnKeyChange onMetaEvent = subscribedKeyChangedEvents.get( kEvent.getKey() );
+						if ( onMetaEvent != null ) {
+							if ( onMetaEvent.handleEvent( metaSend, this, (KeyChange) event ) ) {
+								notifyChildren( metaSend, event );
+								return;
+							}
 						}
 					}
 				}
+
 			}
 			notifyChildren( metaSend, event );
 		}
@@ -292,7 +250,7 @@ public class Bionic {
 				View childView = viewGroup.getChildAt( childIdx );
 				Meta meta = getMeta( childView );
 				if ( meta == null ) {
-					notifyChildren( childView, metaSend, event ); // FIXME: recursive for speediness -- for now
+					notifyChildren( childView, metaSend, event ); // recursive for speediness
 				} else {
 					try {
 						meta.onEvent( metaSend, event );
@@ -304,7 +262,7 @@ public class Bionic {
 		}
 	}
 
-	private Meta lookup( View view, String key ) throws Exception {
+	private Meta lookup( View view, BionicKey<?> key ) throws Exception {
 		Meta meta = viewMetaMap.get( view );
 		if ( meta != null && meta.containsKey( key ) ) {
 			return meta;
@@ -324,77 +282,6 @@ public class Bionic {
 	}
 
 	/**
-	 * Find the nearest ancestor to the given view containing the given key and return its value<br>
-	 * If key is not obtainable, defaultValue is returned<br>
-	 *
-	 * @param view
-	 * @param key
-	 * @param defaultValue
-	 */
-	public String getString( View view, String key, String defaultValue ) {
-		try {
-			if ( view == null ) {
-				throw new NullPointerException( "View cannot be null" );
-			}
-			Meta meta = lookup( view, key );
-			if ( meta != null ) {
-				Object value = meta.data.get( key );
-				return value == null ? null : String.valueOf( value );
-			}
-		} catch ( Exception e ) {
-			BLog.e( e );
-		}
-		return defaultValue;
-	}
-
-	/**
-	 * Attains a Meta for the given View and associates the value.
-	 *
-	 * @param view
-	 * @param key
-	 * @param value
-	 * @throws Exception if unable to attain a meta
-	 */
-	public void putString( View view, String key, String value ) throws Exception {
-		attainMeta( view ).putString( key, value );
-	}
-
-	/**
-	 * Find the nearest ancestor to the given view containing the given key and return its value<br>
-	 * If key is not obtainable, defaultValue is returned<br>
-	 *
-	 * @param view
-	 * @param key
-	 * @param defaultValue
-	 */
-	public Object getObject( View view, String key, Object defaultValue ) {
-		try {
-			if ( view == null ) {
-				throw new NullPointerException( "View cannot be null" );
-			}
-			Meta meta = lookup( view, key );
-			if ( meta != null ) {
-				return meta.data.get( key );
-			}
-		} catch ( Exception e ) {
-			BLog.e( e );
-		}
-		return defaultValue;
-	}
-
-	/**
-	 * Attains a Meta for the given View and associates the value.
-	 *
-	 * @param view
-	 * @param key
-	 * @param value
-	 * @throws Exception if unable to attain a meta
-	 */
-	public void putObject( View view, String key, String value ) throws Exception {
-		attainMeta( view ).putObject( key, value );
-	}
-
-	/**
 	 * Get a typed value based on the given type aware key.<br>
 	 * Find the nearest ancestor to the given view containing the given key and return its value<br>
 	 * If key is not obtainable, defaultValue is returned<br>
@@ -410,7 +297,7 @@ public class Bionic {
 			if ( view == null ) {
 				throw new NullPointerException( "View cannot be null" );
 			}
-			Meta meta = lookup( view, key.getKeyString() );
+			Meta meta = lookup( view, key );
 			if ( meta != null ) {
 				return key.get( meta );
 			}
@@ -431,8 +318,7 @@ public class Bionic {
 	 * @throws Exception
 	 */
 	public <T> void putValue( View view, BionicKey<T> key, T value ) throws Exception {
-		Meta meta = attainMeta( view );
-		key.put( meta, value );
+		attainMeta( view ).putValue( key, value );
 	}
 
 }

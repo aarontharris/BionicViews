@@ -9,7 +9,6 @@ import android.widget.LinearLayout;
 
 import com.aarontharris.bionicviews.BLog;
 import com.aarontharris.bionicviews.Bionic;
-import com.aarontharris.bionicviews.Bionic.Meta;
 
 public class InputView extends LinearLayout {
 	private Button mInput = null;
@@ -41,9 +40,9 @@ public class InputView extends LinearLayout {
 					public void onClick( View v ) {
 						try {
 							BLog.d( "Input: click" );
-							Meta meta = Bionic.getInstance().attainMeta( InputView.this );
 							counter++;
-							meta.putString( MasterView.testkey1, "input.click " + counter ); // deliberately overwrite, hacky but serves our test
+							Bionic.get().putValue( InputView.this, MasterView.testkey1, "input.click " + counter ); // deliberately overwrite, hacky but serves our test
+							Bionic.get().putValue( InputView.this, MasterView.countkey, counter ); // deliberately overwrite, hacky but serves our test
 						} catch ( Exception e ) {
 							BLog.e( e );
 						}

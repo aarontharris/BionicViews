@@ -10,10 +10,13 @@ import android.widget.TextView;
 
 import com.aarontharris.bionicviews.BLog;
 import com.aarontharris.bionicviews.Bionic;
-import com.aarontharris.bionicviews.Bionic.Meta;
+import com.aarontharris.bionicviews.Bionic.SimpleKey;
+import com.aarontharris.bionicviews.Bionic.StringKey;
 
 public class MasterView extends LinearLayout {
-	public static final String testkey1 = "master.testkey1";
+	public static final StringKey testkey1 = new StringKey();
+	public static final SimpleKey<Integer> countkey = new SimpleKey<>();
+
 	private int counter = 0;
 
 	private Button mInput = null;
@@ -45,9 +48,9 @@ public class MasterView extends LinearLayout {
 					public void onClick( View v ) {
 						try {
 							BLog.d( "Master: click" );
-							Meta meta = Bionic.getInstance().attainMeta( MasterView.this );
 							counter++;
-							meta.putString( testkey1, "master.click " + counter );
+							Bionic.get().putValue( MasterView.this, testkey1, "master.click " + counter );
+							Bionic.get().putValue( MasterView.this, countkey, counter );
 						} catch ( Exception e ) {
 							BLog.e( e );
 						}
@@ -63,8 +66,7 @@ public class MasterView extends LinearLayout {
 				}
 
 				BLog.d( "Master: init" );
-				Meta meta = Bionic.getInstance().attainMeta( this );
-				meta.putString( testkey1, "master.init" );
+				Bionic.get().putValue( this, testkey1, "master.init" );
 			}
 		} catch ( Exception e ) {
 			throw new IllegalStateException( e );

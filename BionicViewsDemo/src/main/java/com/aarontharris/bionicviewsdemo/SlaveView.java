@@ -8,9 +8,9 @@ import android.widget.TextView;
 
 import com.aarontharris.bionicviews.Bionic;
 import com.aarontharris.bionicviews.Bionic.Meta;
-import com.aarontharris.bionicviews.Bionic.MetaEvent;
-import com.aarontharris.bionicviews.Bionic.MetaKeyChangedEvent;
-import com.aarontharris.bionicviews.Bionic.OnMetaEvent;
+import com.aarontharris.bionicviews.Bionic.KeyChange;
+import com.aarontharris.bionicviews.Bionic.OnKeyChange;
+import com.aarontharris.bionicviews.Bionic.StringKey;
 
 public class SlaveView extends LinearLayout {
 	private TextView message;
@@ -38,19 +38,15 @@ public class SlaveView extends LinearLayout {
 
 			if ( !isInEditMode() ) {
 
-
-				Meta meta = Bionic.getInstance().attainMeta( this );
-				meta.subscribeKeyChange( "master.testkey1", true, new OnMetaEvent() {
+				Meta meta = Bionic.get().attainMeta( this );
+				meta.subscribeKeyChange( MasterView.testkey1, true, new OnKeyChange<StringKey>() {
 					@Override
-					public boolean handleEvent( Meta metaSend, Meta metaRecv, MetaEvent event ) {
-						if ( MetaKeyChangedEvent.class.equals( event.getType() ) ) {
-							String key = ( (MetaKeyChangedEvent) event ).getKey();
-							message.setText( metaSend.getString( key, "fail" ) );
-						}
+					public boolean handleEvent( Meta metaSend, Meta metaRecv, KeyChange<StringKey> event ) {
+						String s = event.getKey().get( metaSend );
+						message.setText( s );
 						return true;
 					}
 				} );
-
 
 			}
 		} catch ( Exception e ) {
